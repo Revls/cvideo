@@ -19,4 +19,5 @@ A really deep implementation of this demo for using with a textarea and record e
 # Contribution
 
 - [Alejandro Morales](http://github.com/alejadromg)
+- [Guillermo Rauch](http://github.com/rauchg)
 

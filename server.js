@@ -22,11 +22,13 @@ app.post('/',function(req,res){
   var frames = req.body || [];
   if (Array.isArray(frames) && frames.length){
     console.log('\033[90m - starting processing %s operations\033[39m', req.body.length);
+    // Inicializando el canvas
     var canvas = new Canvas(600,400);
         var ctx = canvas.getContext('2d');
         var job = Date.now(),
         path = __dirname + '/frames/' + job + '-'
         ctx.strokeStyle ='red';
+   // Creando Frames
     function frame(i){
       var data = frames[i];
       if (data){
@@ -51,6 +53,7 @@ app.post('/',function(req,res){
         console.log('\033[90m - wrote %s frames \033[39m',i);
         var videopath = 'video-'+ job + '.mpg'
         console.log('\033[90m - ready for create video\033[39m');
+         // Creando Video
           exec([
             '/usr/bin/ffmpeg',
             '-r 30',
@@ -59,6 +62,7 @@ app.post('/',function(req,res){
             __dirname + '/videos/' + videopath
             ].join(' '), function(er){
             if (er) return console.error(er);
+            // Borrando frames
             console.log('\033[90m - cleaning the house\033[39m');
               exec([
                 'cd ' + __dirname + '/frames',
@@ -76,21 +80,20 @@ app.post('/',function(req,res){
   }
   frame(0);
 })
+/*  
+* Added cluster
+*/
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
-
 if (cluster.isMaster) {
-  // Fork workers.
   for (var i = 0; i < numCPUs; i++) {
     cluster.fork();
   }
-
   cluster.on('death', function(worker) {
     console.log('worker ' + worker.pid + ' died');
     cluster.fork()
   });
 } else {
-  // Worker processes have a http server.
   app.listen(8080);
 }
 
