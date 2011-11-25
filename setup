@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+var exec = require('child_process').exec;
+console.log('\033[90m - Wait, Installing Dependencies...\033[39m');
+exec([
+  'npm install',
+  ' && ',
+  'mkdir frames' ,
+  ' && mkdir videos'
+].join(' '), function(e){
+  if (e) return console.error(e);
+  console.log('\033[96m - Dirs and dependencies installed. Now you can run: \033[39m' + 'node server');
+})

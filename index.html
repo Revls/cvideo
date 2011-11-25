@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Node Video</title>
+    <style>
+      html {
+        background-color:#eee;
+      }
+      body { margin:0}
+      #ctx {
+        background:white;
+        border-bottom: 1px solid #999;
+        border-right: 1px solid #ccc;
+        cursor: crosshair;
+      }
+      p {
+        padding-left: 10px;
+        font-family:'Ubuntu', sans-serif;
+        font-size:12px;
+      }
+      #log {
+        background: white;
+        width: 400px;
+        margin-left: 10px;
+      }
+    </style>
+    <script>
+      window.onload= function(){
+        var canvas = document.getElementById('ctx')
+        , ctx = canvas.getContext('2d')
+        ; window.result =[];
+
+        var noop = function(){}
+        ctx.strokeStyle='red';
+        window.onmousedown = function(ev){
+          if (ev.clientX < 600 && ev.clientY < 400){
+            ctx.beginPath();
+            ctx.moveTo(ev.clientX,ev.clientY);
+            window.onmousemove = move;
+            result.push(['path',ev.clientX, ev.clientY]);
+          }
+        }
+        function move(ev){
+          if (ev.clientX < 600 && ev.clientY < 400){
+            ctx.lineTo(ev.clientX, ev.clientY);
+            ctx.stroke();
+            result.push(['line',ev.clientX, ev.clientY]);
+          }
+        }
+        window.onmouseup = function(){
+          window.onmousemove = noop;
+        }
+        document.getElementById("color").onclick = function(){
+          var val = prompt("Ingrese el color");
+          ctx.strokeStyle = val;
+          result.push(['style', val]); 
+        }
+        var r = document.getElementById('s');
+        r.onclick = function(){
+          r.onclick = noop;
+          r.innerHTML = 'Sending file...'
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', '/', false);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify(result));
+          if (xhr.status === 200){
+             console.log(xhr.responseText);
+             r.innerHTML = 'Sended Ok'
+             var p = document.createElement('p');
+             p.innerHTML = 'Video Saved: '+ xhr.responseText;
+             var log = document.getElementById('log');
+             log.appendChild(p);
+          }
+        }
+      }
+      
+    </script>
+  </head>
+  <body>
+<canvas id="ctx" width="600" height="400">Es necesario de un navegador que soporte canvas HTML5</canvas>
+<br />
+<button id="color">Cambiar color</button>
+<button id="s">Detener Grabación</button>
+<br />
+<div id="log"><p>Logs:</p></div>
+<footer>
+<p>All the credits goes to <a href="//twitter.com/rauchg">@rauchg</a> </p>
+</footer>
+</body>
+</html>
