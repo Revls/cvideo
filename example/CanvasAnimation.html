@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      canvas {
+        border: 1px solid #9C9898;
+      }
+      #tango {
+        top: 10px;
+        left: 10px;
+        padding: 10px;
+      }
+      #container {
+        background-image: url("http://www.html5canvastutorials.com/demos/assets/blue-background.jpg");
+        display: inline-block;
+        overflow: hidden;
+        height: 365px;
+        width: 580px;
+      }
+    </style>
+  </head>
+  <body onmousedown="return false;">
+    <div id="container"></div>
+    <input type="button" id="tango" value="Grabar">
+    <script src="http://d3lp1msu2r81bx.cloudfront.net/kjs/js/lib/kinetic-v4.4.0.min.js"></script>
+    <script>
+      function tango(layer) {
+        for(var n = 0; n < layer.getChildren().length; n++) {
+          var shape = layer.getChildren()[n];
+          var stage = shape.getStage();
+          shape.transitionTo({
+            rotation: Math.random() * Math.PI * 2,
+            radius: Math.random() * 100 + 20,
+            x: Math.random() * stage.getWidth(),
+            y: Math.random() * stage.getHeight(),
+            opacity: Math.random(),
+            duration: 3,
+            easing: 'ease-in-out'
+          });
+        }
+      }
+      var stage = new Kinetic.Stage({
+        container: 'container',
+        width: 578,
+        height: 363
+      });
+
+      var layer = new Kinetic.Layer();
+
+      var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+      for(var n = 0; n < 20; n++) {
+        var shape = new Kinetic.RegularPolygon({
+          x: Math.random() * stage.getWidth(),
+          y: Math.random() * stage.getHeight(),
+          sides: Math.ceil(Math.random() * 5 + 3),
+          radius: Math.random() * 100 + 20,
+          fill: colors[Math.round(Math.random() * 5)],
+          stroke: 'black',
+          opacity: Math.random(),
+          strokeWidth: 4,
+          draggable: true
+        });
+
+        layer.add(shape);
+      }
+
+      stage.add(layer);
+
+      document.getElementById('tango').addEventListener('click', function() {
+        tango(layer);
+      }, false);
+    </script>
+  </body>
+</html>

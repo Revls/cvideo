@@ -4,7 +4,7 @@
 var http = require('http')
  , cluster = require('cluster')
  , express = require('express')
- , nvideo = require('./nvideo.server')
+ , CanvasVideo = require('../server')
  , os = require('os') 
 
 
@@ -15,7 +15,7 @@ var server = express()
  * que el API de canvas
  */
 
-server.use(express.static(__dirname + '/example'))  
+server.use(express.static(__dirname ))  
 
 /*  
 * Added cluster
@@ -31,7 +31,7 @@ if (cluster.isMaster) {
   });
 } else {
   http.createServer(server).listen(process.env.PORT || 8080, function (){ 
-    nvideo(this)
+    CanvasVideo(this)
     console.log('server listening on %d', this.address().port)
   })
 }

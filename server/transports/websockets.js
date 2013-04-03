@@ -1,17 +1,13 @@
-var canvas = require('canvas')
-  , fs = require('fs')
-  , sio = require('socket.io')
-  , processVideo = require('./processing')
-  , clientLib = fs.readFileSync('./nvideo.client.js', 'utf8')
+module.exports.init = WebSockets
 
+var fs = require('fs')
+  , processVideo = require('../task/video')
 
-module.exports = function(server, path){'use strict';
-  
-  fixListeners(server)
+function WebSockets(server, path){
   var ws = sio.listen(server)
   ws.disable('log')
   var video = ws.of(path || '/video')
-  
+
   video.on('connection', function (socket){
 
     var instance = { frames: []}
@@ -29,8 +25,7 @@ module.exports = function(server, path){'use strict';
     })
     socket.on('allframes', function (frames){
       console.log('writing frames')
-      fs.writeFileSync('./data-'+ +new Date + '.json', JSON.stringify(frames))
-
+      fs.writeFileSync('./data-'+ +new Date + '.json', JSON.stringify(frames))  
     })
     socket.on('record:end', function (time){
       instance.endTime = time
@@ -52,23 +47,3 @@ module.exports = function(server, path){'use strict';
     }
   })
 }
-
-
-function fixListeners(server){
-  var oldListeners = server.listeners('request').splice(0);
-  server.removeAllListeners('request')
-
-  server.on('request', function (req, res){
-    if (req.url === '/nvideo/nvideo.client.js') {
-      res.statusCode = 200
-      res.writeHeader('Content-type', 'application/javascript')
-      res.end(clientLib)
-    } else {
-      for (var i = 0, l = oldListeners.length; i < l; i++) {
-        oldListeners[i].call(server, req, res);
-      }
-    }
-  })
-
-}
-

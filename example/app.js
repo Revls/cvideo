@@ -44,9 +44,9 @@ window.onload = function(){
     ev.preventDefault()
     r.innerHTML = 'Sending file...'
     
-    converter.process(function(error, status){
-      if (status.msg === 'ok'){
-        p.innerHTML = '<a href="' + status.url + '">Video Saved</a>';
+    converter.process(function(error, data){
+      if (data.status === 'ok'){
+        p.innerHTML = '<a href="' + data.video + '">Video Saved</a>';
       } else {
         p.innerHTML = '<p> Error saving </p>'
       }
