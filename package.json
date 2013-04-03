@@ -1,9 +1,13 @@
 {
-  "name":"nvideo",
-  "version":"0.0.1",
-  "description":"Demo para Barcamp, implementación del original trabajo de @rauchg para #nodefest",
+  "name": "nvideo",
+  "version": "0.0.1",
+  "description": "Demo para Barcamp, implementación del original trabajo de @rauchg para #nodefest",
   "dependencies": {
-    "canvas": "0.8.x",
-    "express": "2.x.x"
-    }
+    "rsvp-that-works": "~1.2.0",
+    "canvas": "~1.0.2",
+    "express": "~3.1.1"
+  },
+  "devDependencies": {
+    "longjohn": "~0.2.0"
   }
+}
