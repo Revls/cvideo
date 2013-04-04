@@ -4,7 +4,7 @@
 var http = require('http')
  , cluster = require('cluster')
  , express = require('express')
- , CanvasVideo = require('../server')
+ , CanvasVideo = require('../')
  , os = require('os') 
 
 

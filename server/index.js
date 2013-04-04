@@ -7,7 +7,6 @@
  */ 'use strict';
 
 var fs = require('fs')
-  , processVideo = require('./task/video')
   , clientLib
 
 

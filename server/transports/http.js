@@ -2,6 +2,7 @@
 var processVideo = require('../task/video')
   , processFrames = require('../task/frames')
   , makeDir = require('../task/makeDir')
+  , watch = require('../task/watch')
   , CustomObject = require('../objects')
 
 
@@ -16,6 +17,8 @@ module.exports = Object.create({
       'job:width': 600,
       'job:height': 400,
       'rate': 30,
+      'max:videos': 30,
+      'max:frames': 30
     })
 
     
@@ -23,6 +26,7 @@ module.exports = Object.create({
     // debug(opts)
     
     this._opts = opts
+    watch(this._opts)
     this._server = server
     return this
   },

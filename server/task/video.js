@@ -6,6 +6,7 @@
  */
 
 var cp     = require('child_process')
+  , shell  = require('shelljs')
   , path   = require('path')
   , fs     = require('fs')
 
