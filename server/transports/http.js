@@ -2,6 +2,7 @@
 var processVideo = require('../task/video')
   , processFrames = require('../task/frames')
   , makeDir = require('../task/makeDir')
+  , send    = require('../task/send')
   , watch = require('../task/watch')
   , CustomObject = require('../objects')
 
@@ -58,6 +59,7 @@ module.exports = Object.create({
     processFrames(frames, self._opts).then(function (data){
       self.endReq(data, res)
     }, function (error){
+      debug(error.stack)
       self.endReq({status: 'nok', id: frames.id, code: 500}, res)
     })
   },
@@ -67,7 +69,7 @@ module.exports = Object.create({
       success.video = success.video.split('/tasks')[1]
       self.endReq(success, res)
     }, function (error){
-      console.log(error.stack)
+      debug(error.stack)
       res.statusCode = 500
       res.end(error.stack)
     })  
@@ -77,6 +79,7 @@ module.exports = Object.create({
     makeDir(meta, this._opts).then(function (){
       self.endReq({status: 'ok', id: meta.id}, res)
     }, function (error){
+      debug(error.stack)
       self.endReq({status: 'nok', id: meta.id, code: 500}, res)
     })
   },
@@ -84,6 +87,9 @@ module.exports = Object.create({
     res.statusCode = json.code || 200
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(json))
+  },
+  sendVideo: function (req, res){
+    send.call(this, req, res)
   }
 })
 

@@ -36,7 +36,7 @@ function fixListeners(server, transport){
     } else if (req.url.indexOf(transport.url) === 0){
       transport.process(req, res)
     } else if (req.url.indexOf('/videos/') === 0) {
-      sendVideo.call(server, req, res)
+      transport.sendVideo(req, res)
     } else {
       for (var i = 0, l = oldListeners.length; i < l; i++) {
         oldListeners[i].call(server, req, res);
@@ -45,22 +45,3 @@ function fixListeners(server, transport){
   })
 }
 
-
-function sendVideo(req, res){
-  if (!fs.existsSync(__dirname + '/tasks' + req.url)) {
-    res.statusCode = 404
-    return res.end('not found')
-  }
-  
-  var stream = fs.createReadStream(__dirname + '/tasks' + req.url)
-
-  res.setHeader('Content-Type', 'video/mp4')
-  stream.on('error', function (error){
-    stream.unpipe(res)
-    if (stream.readStop) stream.readStop()
-    res.statusCode = 500
-    res.write('Internal server error\n')
-    res.end(error.stack)
-  })
-  stream.pipe(res)
-}
