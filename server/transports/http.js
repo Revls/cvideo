@@ -22,7 +22,7 @@ module.exports = Object.create({
     })
 
     
-    if (options) opts.mixin(options)
+    if (options) opts.merge(options)
     // debug(opts)
     
     this._opts = opts

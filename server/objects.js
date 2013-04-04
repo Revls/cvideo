@@ -84,6 +84,10 @@ ExtendedObject.prototype.mixin = function (newStuff){
   return this.set(newStuff)
 }
 
+ExtendedObject.prototype.merge = function (changes){
+  return merge(this, changes)
+}
+
 ExtendedObject.prototype.set = function (id, tng){
   if (!tng && typeof id === 'object') {
     return Object.keys(id).forEach(function(tn){ this.set(tn, id[tn]) }, this)
