@@ -58,7 +58,8 @@ ExtendedObject.mix = function (options){
  *  o.get('a.b.c') // -> {f: 1, d: 2}
  *  o.get('a.b.c.d') // -> 2
  */
-ExtendedObject.prototype.get = function (id){
+ExtendedObject.prototype.get
+ExtendedObject.prototype.g = function (id){
   var deep = destructure(id, this._separator) 
   var noexist = false
   var found = deep.reduce(function (prev, next){

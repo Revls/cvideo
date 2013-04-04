@@ -36,8 +36,8 @@ module.exports = function (frames, options){//'use strict';
   // debug(opts)
   
   opts.mixin({
-    'job:path': path.join(opts.get('path'), job , job + '-'),
-    'job:vpath': path.join(opts.get('vpath'), job ,'video-' + job + '.mp4'),
+    'job:path': path.join(opts.g('path'), job , job + '-'),
+    'job:vpath': path.join(opts.g('vpath'), job ,'video-' + job + '.mp4'),
   })
 
   debug('\033[96m - starting job \033[39m');
@@ -72,17 +72,17 @@ function debug(){
 function processVideo(opts){
   var promise = new RSVP.Promise()
     , start = +new Date
-  new ffmpeg({ source: opts.get('job:path') + '%d.png'})
-    .withFps(opts.get('rate'))
+  new ffmpeg({ source: opts.g('job:path') + '%d.png'})
+    .withFps(opts.g('rate'))
     .toFormat('mp4')
-    .saveToFile(opts.get('job:vpath'), function(stdout, stderr) {
+    .saveToFile(opts.g('job:vpath'), function(stdout, stderr) {
       // Borrando frames
       debug(stdout, stderr)
       debug('\033[90m - cleaning the house\033[39m')
       removeFrames()
     });
   function removeFrames(){
-    cp.exec('rm  -rf ' + opts.get('path') + opts.get('job:id'), function(error){
+    cp.exec('rm  -rf ' + opts.g('path') + opts.g('job:id'), function(error){
       if (error) return promise.reject(error)
       debug('\033[96m - OK!\033[39m');
       debug('\033[96m - video ready at: %s\033[39m', opts.vpath)
@@ -109,7 +109,7 @@ function processFrames(opts){
   // Creando Frames
   process.nextTick(function(){
     var errors = []
-    opts.get('job:frames').forEach(function(frame, i){
+    opts.g('job:frames').forEach(function(frame, i){
       switch (frame[0]){
         case 'path':
           ctx.beginPath()
@@ -124,7 +124,7 @@ function processFrames(opts){
       }
       canvas.toBuffer(function(e, b){
         if (e) return errors.push(e)
-        fs.writeFile(opts.get('job:path') + (i + 1) + '.png', b, function (error, data){
+        fs.writeFile(opts.g('job:path') + (i + 1) + '.png', b, function (error, data){
           if (error)  errors.push(error)
           if (i === (opts.job.frames.length - 1)){
             if (errors.length > 0) return promise.reject(errors)
@@ -140,9 +140,9 @@ function processFrames(opts){
 
 function makeDir(opts){
   var promise = new RSVP.Promise()
-  cp.exec(['mkdir -p ' + opts.get('path') + opts.get('job:id'),
+  cp.exec(['mkdir -p ' + opts.g('path') + opts.g('job:id'),
     '&&',
-    'mkdir -p ' + opts.get('vpath') + opts.get('job:id'),
+    'mkdir -p ' + opts.g('vpath') + opts.g('job:id'),
     ].join(' '), function (error){
     if (error) return promise.reject(error)
     return promise.resolve()

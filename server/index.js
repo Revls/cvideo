@@ -52,7 +52,7 @@ function sendVideo(req, res){
     res.statusCode = 404
     return res.end('not found')
   }
-
+  
   var stream = fs.createReadStream(__dirname + '/tasks' + req.url)
 
   res.setHeader('Content-Type', 'video/mp4')
