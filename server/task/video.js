@@ -5,10 +5,10 @@
  * 
  */
 
-var cp     = require('child_process')
-  , shell  = require('shelljs')
-  , path   = require('path')
-  , fs     = require('fs')
+var cp    = require('child_process')
+  , shell = require('shelljs')
+  , path  = require('path')
+  , fs    = require('fs')
 
 var RSVP   = require('rsvp-that-works')
   , ffmpeg = require('fluent-ffmpeg')
@@ -51,7 +51,7 @@ function processVideo(job, opts){
     .saveToFile(vpath, function(stdout, stderr) {
       // Borrando frames
       debug(stdout, stderr)
-      debug('\033[90m - cleaning the house\033[39m')
+      debug('\033[90m - cleaning the house for %d \033[39m', job.id)
       removeFrames()
     });
   function removeFrames(){
