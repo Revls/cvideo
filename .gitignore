@@ -1,0 +1,4 @@
+node_modules
+*/tasks/frames/*
+*/tasks/videos/*
+*.sublime-*
