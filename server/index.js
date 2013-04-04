@@ -14,7 +14,7 @@ module.exports = function(server, opts){'use strict';
   if (!opts) opts = {}
   if (!opts.transport) opts.transport = 'http'
   var transport = require('./transports/' + opts.transport)
-  clientLib = fs.readFileSync('../client/' + opts.transport + '.js', 'utf8')
+  clientLib = fs.readFileSync(__dirname + '/../client/' + opts.transport + '.js', 'utf8')
 
   if (transport.url) fixListeners(server, transport)
   else fixListeners(server)
