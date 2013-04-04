@@ -1,5 +1,5 @@
 {
-  "name": "nvideo",
+  "name": "cvideo",
   "version": "0.0.1",
   "description": "Demo para Barcamp, implementación del original trabajo de @rauchg para #nodefest",
   "dependencies": {
