@@ -1,8 +1,27 @@
+
 var processVideo = require('../task/video')
+  , processFrames = require('../task/frames')
+  , makeDir = require('../task/makeDir')
+  , CustomObject = require('../objects')
+
 
 module.exports = Object.create({
   url: '/canvas/video',
-  init: function (server, opts){
+  init: function (server, options){
+    var opts = CustomObject.create({separator: ':'})
+  
+    opts.mixin({
+      'path': __dirname + '/../tasks/frames/',
+      'vpath': __dirname + '/../tasks/videos/',
+      'job:width': 600,
+      'job:height': 400,
+      'rate': 30,
+    })
+
+    
+    if (options) opts.mixin(options)
+    // debug(opts)
+    
     this._opts = opts
     this._server = server
     return this
@@ -19,23 +38,48 @@ module.exports = Object.create({
     })
     req.on('end', function (){
       try {
-        self._opts.frames = JSON.parse(frames)
+        frames = JSON.parse(frames)
       } catch (ex){
         res.statusCode = 500
         return res.end(ex.stack)
       }
 
-      processVideo(self._opts.frames, self._opts).then(function (success){
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'application/json')
-        success.video = success.video.split('/tasks')[1]
-        res.end(JSON.stringify(success))
-      }, function (error){
-        console.log(error.stack)
-        res.statusCode = 500
-        res.end(error.stack)
-      })  
+      if (~req.url.indexOf('/start')) return self.makeDir(frames, res)
+      if (~req.url.indexOf('/encode')) return self.processVideo(frames, res)
+      if (~req.url.indexOf('/frames')) return self.processFrames(frames, res)
     })
+  },
+  processFrames: function (frames, res){
+    var self = this
+    processFrames(frames, self._opts).then(function (data){
+      self.endReq(data, res)
+    }, function (error){
+      self.endReq({status: 'nok', id: frames.id, code: 500}, res)
+    })
+  },
+  processVideo: function (frames, res){
+    var self = this
+    processVideo(frames, self._opts).then(function (success){
+      success.video = success.video.split('/tasks')[1]
+      self.endReq(success, res)
+    }, function (error){
+      console.log(error.stack)
+      res.statusCode = 500
+      res.end(error.stack)
+    })  
+  },
+  makeDir: function (meta, res){
+    var self = this
+    makeDir(meta, this._opts).then(function (){
+      self.endReq({status: 'ok', id: meta.id}, res)
+    }, function (error){
+      self.endReq({status: 'nok', id: meta.id, code: 500}, res)
+    })
+  },
+  endReq: function (json, res){
+    res.statusCode = json.code || 200
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify(json))
   }
 })
 

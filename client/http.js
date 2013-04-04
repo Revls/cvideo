@@ -11,28 +11,108 @@
        };
   })();
 
-  var frames = []
-  exports.Converter = Object.create({
-     init: function (canvas, host){
+  function debug(){
+    console.log.apply(console, arguments)
+  }
 
-       return this
-     },
-     emit: function (type, chunk){
-       frames.push([type].concat(chunk))
-     },
-     process: function (cb){
-       request({
-        url: '/canvas/video',
-        method: 'POST',
-        data: JSON.stringify(frames),
-        callback: function (st){
-          var response = JSON.parse(st.response)    
-          if (response.status === 'ok') cb(null, response)
-          else cb(response)
+  function StreamFrames(canvas){
+    canvas = canvas || document.querySelector('canvas')
+    if (!canvas) throw new Error('no canvas in the DOM')
+    if (typeof canvas.toDataURL !== 'function' ) throw new Error('You need to provide a valid canvas')
+    this._job = +new Date
+    this._canvas = canvas
+    this._frames = []
+    this._failed = []
+    this._sended = []
+  }
+
+  StreamFrames.create = function (canvas){
+    return new StreamFrames(canvas)
+  }
+
+  StreamFrames.prototype.start
+  StreamFrames.prototype.init = function(cb){
+    var self = this
+    request({
+      method: 'POST',
+      url: '/canvas/video/start',
+      data: JSON.stringify({id: this._job, author: this._author || 'anon'}),
+      callback: function (resp){
+        resp = JSON.parse(resp.response)
+        self._frame()
+        self.STATUS = 1
+        if (cb) cb(resp)
+      }
+    })
+    
+    return this
+  }
+
+  StreamFrames.prototype._frame = function() {
+    var self = this
+    if (self.STATUS === 0) return
+    requestAnimationFrame(function(){
+      self._frame()
+    })
+    var frame = self._canvas.toDataURL('image/png').substr(22)
+    self._frames.push(frame)
+    if (self._frames.length % 100 === 0) self._sendPacket(self._frames.length)
+  }
+  StreamFrames.prototype._sendPacket = function (fin, length, cb){
+    if (!length) length = 100
+    var packet = {
+      id: this._job,
+      frames: this._frames.slice(fin - length, fin),
+      packet: fin / 100
+    }, self = this
+
+    request({
+      method: 'POST',
+      url: '/canvas/video/frames',
+      data: JSON.stringify(packet),
+      callback: function (resp){
+        resp = JSON.parse(resp.response)
+        
+        if (resp.status === 'ok') {
+          debug('Packet sended: %d', packet.packet)
+          if (cb) cb(null, resp)
+          return self._sended.push(packet.packet)
         }
+        debug('Packet failed: %d', packet.packet)
+        if (cb) cb(resp)
+        self._failed.push(fin)
+      }
+    })
+  }
+
+  StreamFrames.prototype.sendMissingFrames = function() {
+    this._failed.map(function(packet){
+      this._sendPacket(packet)
+      return null
+    }, this)
+  }
+
+  StreamFrames.prototype.convertToVideo = function (cb){
+    var left = this._frames.length % 100, self = this
+    self.STATUS = 0
+    if (left !== 0){
+      this._sendPacket(left, left, function (error, resp){
+        if (error) return console.log(error)
+        request({
+          url: '/canvas/video/encode',
+          method: 'POST',
+          data: JSON.stringify({id: self._job}),
+          callback: function (res){
+            res = JSON.parse(res.response)
+            if (res.status === 'ok') cb(null, res)
+            else cb(res)
+          }
+        })
       })
-     }
-   })
+    }
+  }
+
+  exports.CanvasVideo = StreamFrames
 
   //---- Helpers -----
   function request(o, cb){

@@ -34,7 +34,7 @@ function fixListeners(server, transport){
       res.statusCode = 200
       res.setHeader('Content-Type', 'application/javascript')
       res.end(clientLib)
-    } else if (req.url === transport.url){
+    } else if (req.url.indexOf(transport.url) === 0){
       transport.process(req, res)
     } else if (req.url.indexOf('/videos/') === 0) {
       sendVideo.call(server, req, res)

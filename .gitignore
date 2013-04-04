@@ -1,4 +1,4 @@
 node_modules
-tasks/frames
-tasks/videos
+*/tasks/frames/*
+*/tasks/videos/*
 *.sublime-*

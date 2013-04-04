@@ -26,6 +26,9 @@
   <body onmousedown="return false;">
     <div id="container"></div>
     <input type="button" id="tango" value="Grabar">
+    <p id="msgs"></p>
+    <script type="text/javascript" src="/canvas/canvas.video.js"></script>
+
     <script src="http://d3lp1msu2r81bx.cloudfront.net/kjs/js/lib/kinetic-v4.4.0.min.js"></script>
     <script>
       function tango(layer) {
@@ -48,6 +51,8 @@
         width: 578,
         height: 363
       });
+     
+      
 
       var layer = new Kinetic.Layer();
 
@@ -69,10 +74,33 @@
       }
 
       stage.add(layer);
+      var recorder = CanvasVideo.create()
+      var $tango = document.getElementById('tango')
+      var $msgs = document.getElementById('msgs')
+      $tango.addEventListener('click', function() {
+        if (recorder.STATUS !== 1) {
+          recorder.init()
+          $tango.textContent = 'Recording'
+        }
+        else {
+          $tango.setAttribute('disabled', true)
+          $tango.textContent = 'Sending..'
+          return recorder.convertToVideo(function (error, meta){
+            if (error) {
+              $msg.classList.add('error')
+              $msgs.innerHTML = 'Error converting to video'
+              console.log(error.error)
+            } else {
+              $msgs.classList.add('success')
+              $msgs.innerHTML = 'Sucess! Nuevo video en <a href="' + meta.video + '">aqui</a>'
+            }
+          })
+        }
 
-      document.getElementById('tango').addEventListener('click', function() {
         tango(layer);
+        
       }, false);
+
     </script>
   </body>
 </html>
