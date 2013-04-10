@@ -1,3 +1,84 @@
+!function(exports){'use strict';
+function Events(){}
+
+Events.create = function (options){
+  return new Events(options)
+}
+
+Events.prototype._listeners = {}
+
+Events.prototype.emit = function (evnt){
+  if (!this._listeners[evnt]) return this
+  var args = [].slice.call(arguments, 1)
+  this._listeners[evnt].forEach(function (cb){
+    try {
+      cb.apply(this, args)
+    } catch (exc){
+      console.log('ERROR executing function', exc.stack)
+    }
+  }, this)
+}
+
+Events.prototype.on = 
+Events.prototype.bind =  function (evnt, cb){
+  if (!this._listeners[evnt]) this._listeners[evnt] = []
+  this._listeners[evnt].push(cb)
+  return this
+}
+
+function Kue(options){
+  if (!options) options = {}
+  this._timeout = options.timeout || 10*1000 // ten seconds
+  this._resolve = 'resolve' in options && options.resolve !== true ? false: true
+  this._queue = []
+  this.data = []
+  this.called = false
+}
+
+Kue.prototype = Object.create(Events.prototype, {
+  constructor: Kue
+})
+
+Kue.prototype.add = function (task){
+  if (this.called) this.called = false
+  if (this._resolve && !this._queue.length) {
+    this._queue.push(1)
+    this.emit('task', task)
+    task(this._resolver.bind(this))
+    return this
+  } else if (this._queue.length || !this._resolve) {
+   this._queue.push(task)
+   return this
+ }
+}
+
+Kue.prototype._resolver = function (error, data){
+  if (error || data) {
+    this.emit('taskr', error, data)
+    this.data.push([error, data])
+  }
+  var next = this._queue.shift()
+  if (!next) this._end(this.data)
+  if (typeof next === 'number') return this._resolver()
+  if (typeof next !== 'function') return this._end(this.data)
+  return next(this._resolver.bind(this))
+}
+
+Kue.prototype.resolve = function (cb){
+  this.on('resolve', cb)
+}
+Kue.prototype._end = function (data){
+  if (!this.called) {
+    this.called = true
+    this.emit('resolve', data)
+  }
+}
+
+exports.Kue = Kue
+exports.Events = Events
+
+}(window)
+
 !function (exports){
   var requestAnimationFrame = (function(){
     return window.requestAnimationFrame   || 
@@ -15,6 +96,7 @@
   }
 
   function StreamFrames(canvas){
+    var self = this
     canvas = canvas || document.querySelector('canvas')
     if (!canvas) throw new Error('no canvas in the DOM')
     if (typeof canvas.toDataURL !== 'function' ) throw new Error('You need to provide a valid canvas')
@@ -23,27 +105,36 @@
     this._frames = []
     this._failed = []
     this._sended = []
+    this._kue = new Kue
+    this._kue.on('taskr', function (data){
+      self.emit('progress', data)
+    })
   }
+
 
   StreamFrames.create = function (canvas){
     return new StreamFrames(canvas)
   }
-
+  StreamFrames.prototype = Object.create(Events.prototype, {
+    constructor: StreamFrames
+  })
   StreamFrames.prototype.start
   StreamFrames.prototype.init = function(cb){
     var self = this
-    request({
-      method: 'POST',
-      url: '/canvas/video/start',
-      data: JSON.stringify({id: this._job, author: this._author || 'anon'}),
-      callback: function (resp){
-        resp = JSON.parse(resp.response)
-        self._frame()
-        self.STATUS = 1
-        if (cb) cb(resp)
-      }
+    this._kue.add(function (done){
+      request({
+        method: 'POST',
+        url: '/canvas/video/start',
+        data: JSON.stringify({id: this._job, author: this._author || 'anon'}),
+        callback: function (resp){
+          resp = JSON.parse(resp.response)
+          self._frame()
+          self.STATUS = 1
+          if (cb) cb(resp)
+          done(null, resp)
+        }
+      })
     })
-    
     return this
   }
 
@@ -64,23 +155,26 @@
       frames: this._frames.slice(fin - length, fin),
       packet: fin / 100
     }, self = this
-
-    request({
-      method: 'POST',
-      url: '/canvas/video/frames',
-      data: JSON.stringify(packet),
-      callback: function (resp){
-        resp = JSON.parse(resp.response)
-        
-        if (resp.status === 'ok') {
-          debug('Packet sended: %d', packet.packet)
-          if (cb) cb(null, resp)
-          return self._sended.push(packet.packet)
+    this._kue.add(function(done){
+      request({
+        method: 'POST',
+        url: '/canvas/video/frames',
+        data: JSON.stringify(packet),
+        callback: function (resp){
+          resp = JSON.parse(resp.response)
+          
+          if (resp.status === 'ok') {
+            debug('Packet sended: %d', packet.packet)
+            if (cb) cb(null, resp)
+            done(null, resp)
+            return self._sended.push(packet.packet)
+          }
+          debug('Packet failed: %d', packet.packet)
+          if (cb) cb(resp)
+          done(resp, null)
+          self._failed.push(fin)
         }
-        debug('Packet failed: %d', packet.packet)
-        if (cb) cb(resp)
-        self._failed.push(fin)
-      }
+      })
     })
   }
 
@@ -92,22 +186,26 @@
   }
 
   StreamFrames.prototype.convertToVideo = function (cb){
-    var left = this._frames.length % 100, self = this
+    var left = this._frames.length % 100, self = this, resp
     self.STATUS = 0
     if (left !== 0){
-      this._sendPacket(left, left, function (error, resp){
-        if (error) return console.log(error)
+      this._sendPacket( left, left, function (done){
         request({
           url: '/canvas/video/encode',
           method: 'POST',
           data: JSON.stringify({id: self._job}),
           callback: function (res){
-            res = JSON.parse(res.response)
+            resp = res = JSON.parse(res.response)
             if (res.status === 'ok') cb(null, res)
             else cb(res)
           }
         })
       })
+      // this._kue.resolve(function (data){
+      //   console.log(data)
+      //   if (resp.status == 'ok') return cb(null, resp)
+      //   cb(resp)
+      // })
     }
   }
 
