@@ -14,7 +14,7 @@ module.exports = function(server, opts){'use strict';
   if (!opts) opts = {}
   if (!opts.transport) opts.transport = 'http'
   var transport = require('./transports/' + opts.transport)
-  clientLib = fs.readFileSync(__dirname + '/../client/' + opts.transport + '.js', 'utf8')
+  clientLib = fs.readFileSync(__dirname + '/../client/' + opts.transport + '.min.js', 'utf8')
 
   if (transport.url) fixListeners(server, transport)
   else fixListeners(server)
@@ -32,6 +32,7 @@ function fixListeners(server, transport){
     if (req.url === '/canvas/canvas.video.js') {
       res.statusCode = 200
       res.setHeader('Content-Type', 'application/javascript')
+      res.setHeader('Content-Length', clientLib.length)
       res.end(clientLib)
     } else if (req.url.indexOf(transport.url) === 0){
       transport.process(req, res)

@@ -1,4 +1,5 @@
 !function(exports){'use strict';
+
 function Events(){}
 
 Events.create = function (options){

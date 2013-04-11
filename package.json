@@ -8,11 +8,16 @@
     "shelljs": "~0.1.2",
     "chokidar": "~0.6.2"
   },
-  "main":"./index.js",
+  "author":{
+    "name":"Alejandro Morales",
+    "email":"me@alejo.in"
+  },
+  "main": "./index.js",
   "devDependencies": {
     "express": "~3.1.1",
     "longjohn": "~0.2.0",
     "grunt": "~0.4.1",
-    "grunt-esmangle": "~0.2.1"
+    "grunt-esmangle": "~0.2.1",
+    "grunt-contrib-concat": "~0.2.0"
   }
 }
