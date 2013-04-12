@@ -25,6 +25,15 @@
         context = canvas.getContext("2d");
         var recorder = CanvasVideo.create(canvas).init()
         
+        recorder.on('status', function (nstat){
+          console.log('STATUS changed to:', nstat)
+        })
+        recorder.on('end', function (val){
+          console.group()
+          console.log('VIDEO:\n')
+          console.dir(val)
+          console.groupEnd()
+        })
         // Dimensions
         var width = $canvas.width();
         var height = $canvas.height();

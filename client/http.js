@@ -1,5 +1,5 @@
 /*
- * cvideo - v0.0.1 - 2013-04-11
+ * cvideo - v0.0.1 - 2013-04-12
  * Copyright (c) 2013 Alejandro Morales; Licensed  
  */
 !function(exports){'use strict';
@@ -85,7 +85,8 @@ exports.Events = Events
 }(window)
 
 !function (exports){
-  var requestAnimationFrame = (function(){
+  var STATUS = 0,
+  requestAnimationFrame = (function(){
     return window.requestAnimationFrame   || 
        window.webkitRequestAnimationFrame || 
        window.mozRequestAnimationFrame    || 
@@ -96,15 +97,12 @@ exports.Events = Events
        };
   })();
 
-  function debug(){
-    console.log.apply(console, arguments)
-  }
-
-  function StreamFrames(canvas){
+  function StreamFrames(canvas, options){
     var self = this
     canvas = canvas || document.querySelector('canvas')
     if (!canvas) throw new Error('no canvas in the DOM')
     if (typeof canvas.toDataURL !== 'function' ) throw new Error('You need to provide a valid canvas')
+    if (!options) options = {}
     this._job = +new Date
     this._canvas = canvas
     this._frames = []
@@ -117,12 +115,23 @@ exports.Events = Events
   }
 
 
-  StreamFrames.create = function (canvas){
-    return new StreamFrames(canvas)
+  StreamFrames.create = function (canvas, options){
+    return new StreamFrames(canvas, options)
   }
   StreamFrames.prototype = Object.create(Events.prototype, {
     constructor: StreamFrames
   })
+
+  Object.defineProperty(StreamFrames.prototype, 'STATUS', {
+    get: function (){
+      return STATUS
+    },
+    set: function (val){
+      this.emit('status', val)
+      STATUS = val
+    }
+  })
+
   StreamFrames.prototype.start
   StreamFrames.prototype.init = function(cb){
     var self = this
@@ -133,8 +142,8 @@ exports.Events = Events
         data: JSON.stringify({id: this._job, author: this._author || 'anon'}),
         callback: function (resp){
           resp = JSON.parse(resp.response)
-          self._frame()
           self.STATUS = 1
+          self._frame()
           if (cb) cb(resp)
           done(null, resp)
         }
@@ -145,13 +154,24 @@ exports.Events = Events
 
   StreamFrames.prototype._frame = function() {
     var self = this
-    if (self.STATUS === 0) return
+    if (self.STATUS !== 1) return
     requestAnimationFrame(function(){
       self._frame()
     })
     var frame = canvasToImage(self._canvas, self._background || 'white')
     self._frames.push(frame)
     if (self._frames.length % 100 === 0) self._sendPacket(self._frames.length)
+  }
+
+  StreamFrames.prototype.pause = function () {
+    this.STATUS = 0
+    return this
+  }
+
+  StreamFrames.prototype.resume = function () {
+    this.STATUS = 1
+    this._frame()
+    return this
   }
   StreamFrames.prototype._sendPacket = function (fin, length, cb){
     if (!length) length = 100
@@ -191,8 +211,13 @@ exports.Events = Events
   }
 
   StreamFrames.prototype.convertToVideo = function (cb){
-    var left = this._frames.length % 100, self = this, resp
-    self.STATUS = 0
+    var left = this._frames.length % 100
+      , self = this
+      , resp
+    
+    loading()
+    self.STATUS = 2
+
     if (left !== 0){
       this._sendPacket( left, left, function (done){
         request({
@@ -201,24 +226,32 @@ exports.Events = Events
           data: JSON.stringify({id: self._job}),
           callback: function (res){
             resp = res = JSON.parse(res.response)
+            loading(1)
+            self.emit('end', resp)
             if (res.status === 'ok') cb(null, res)
             else cb(res)
           }
         })
       })
-      // this._kue.resolve(function (data){
-      //   console.log(data)
-      //   if (resp.status == 'ok') return cb(null, resp)
-      //   cb(resp)
-      // })
     }
   }
 
   exports.CanvasVideo = StreamFrames
 
   //---- Helpers -----
+  function debug(){
+    if (typeof DEBUG === 'undefined') return
+    console.log.apply(console, arguments)
+  }
+
+  function loading(hide){
+    var el = document.body
+    if (hide) el.removeAttribute('data-loading')
+    else el.setAttribute('data-loading', '')
+  }
+
   function request(o, cb){
-    document.body.setAttribute('data-loading', '')
+    loading()
     var xhr = new XMLHttpRequest()
       , method = o.method || 'GET'
       , data = o.data || {}
@@ -236,7 +269,7 @@ exports.Events = Events
     for (var header in o.headers) xhr.setRequestHeader(header, o.headers[header]);
 
     function callback(){
-      document.body.removeAttribute('data-loading')
+      loading(1)
       if (o.callback) o.callback(xhr)
       if (cb) cb(xhr)
     }
