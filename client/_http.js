@@ -17,6 +17,7 @@
     if (!canvas) throw new Error('no canvas in the DOM')
     if (typeof canvas.toDataURL !== 'function' ) throw new Error('You need to provide a valid canvas')
     if (!options) options = {}
+    this._url = options.url || '/canvas/video'
     this._job = +new Date
     this._canvas = canvas
     this._frames = []
@@ -52,7 +53,7 @@
     this._kue.add(function (done){
       request({
         method: 'POST',
-        url: '/canvas/video/start',
+        url: self._url + '/start',
         data: JSON.stringify({id: this._job, author: this._author || 'anon'}),
         callback: function (resp){
           resp = JSON.parse(resp.response)
@@ -97,7 +98,7 @@
     this._kue.add(function(done){
       request({
         method: 'POST',
-        url: '/canvas/video/frames',
+        url: self._url + '/frames',
         data: JSON.stringify(packet),
         callback: function (resp){
           resp = JSON.parse(resp.response)
@@ -135,7 +136,7 @@
     if (left !== 0){
       this._sendPacket( left, left, function (done){
         request({
-          url: '/canvas/video/encode',
+          url: self._url + '/encode',
           method: 'POST',
           data: JSON.stringify({id: self._job}),
           callback: function (res){
