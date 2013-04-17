@@ -1,5 +1,5 @@
 /*
- * cvideo - v0.0.1 - 2013-04-12
+ * cvideo - v0.0.1 - 2013-04-17
  * Copyright (c) 2013 Alejandro Morales; Licensed  
  */
 !function(exports){'use strict';
@@ -103,6 +103,7 @@ exports.Events = Events
     if (!canvas) throw new Error('no canvas in the DOM')
     if (typeof canvas.toDataURL !== 'function' ) throw new Error('You need to provide a valid canvas')
     if (!options) options = {}
+    this._url = options.url || '/canvas/video'
     this._job = +new Date
     this._canvas = canvas
     this._frames = []
@@ -138,7 +139,7 @@ exports.Events = Events
     this._kue.add(function (done){
       request({
         method: 'POST',
-        url: '/canvas/video/start',
+        url: self._url + '/start',
         data: JSON.stringify({id: this._job, author: this._author || 'anon'}),
         callback: function (resp){
           resp = JSON.parse(resp.response)
@@ -183,7 +184,7 @@ exports.Events = Events
     this._kue.add(function(done){
       request({
         method: 'POST',
-        url: '/canvas/video/frames',
+        url: self._url + '/frames',
         data: JSON.stringify(packet),
         callback: function (resp){
           resp = JSON.parse(resp.response)
@@ -221,7 +222,7 @@ exports.Events = Events
     if (left !== 0){
       this._sendPacket( left, left, function (done){
         request({
-          url: '/canvas/video/encode',
+          url: self._url + '/encode',
           method: 'POST',
           data: JSON.stringify({id: self._job}),
           callback: function (res){
